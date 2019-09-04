@@ -1,3 +1,5 @@
+const axios = require('axios')
+const parseString = require('xml2js').parseString;
 
 module.exports = () => {
 	return {
@@ -8,12 +10,11 @@ module.exports = () => {
 
 // todo: ip address can come from client
 // constants
-const avr_ip_address = 'http://192.168.1.10' //todo: process.env.
 const MAIN_ZONE = "MAIN ZONE"
 
 // urls
-const avr_settings_url = `${avr_ip_address}/goform/formMainZone_MainZoneXml.xml`
-const push_to_avr_url = `${avr_ip_address}/MainZone/index.put.asp`
+const avr_settings_url = `${process.env.AVR_URL}/goform/formMainZone_MainZoneXml.xml`
+const push_to_avr_url = `${process.env.AVR_URL}/MainZone/index.put.asp`
 
 // actions
 const SET_FIP_RADIO = "cmd0=PutZone_InputFunction%2FIRADIO&cmd1=aspMainZone_WebUpdateStatus%2F"
@@ -27,9 +28,23 @@ function getHeadersForZone(zone) {
 
 // -> settings
 async function settings(req, res) {
-	console.log('retrieve avr settings')
+	console.log('retrieving avr settings')
 	let response = await axios.get(avr_settings_url, { withCredentials: true }, getHeadersForZone(MAIN_ZONE))
-	console.log(response)
+	parseString(response.data, (err, result) => {
+		if (err) {
+			res.sendStatus(400, { error: `Failure while getting settings ${err}` })
+		} else {
+			console.log(result.item);
+			console.log(result.item.MasterVolume)
+
+			const masterVolume = 80 + parseFloat(result.item.MasterVolume[0].value);
+			const selection = result.item.InputFuncSelect[0].value;
+			const mute = result.item.Mute[0].value === 'on';
+			const power = result.item.Power[0].value;
+
+			res.send({ result: { power, masterVolume, selection, mute } })
+		}
+	});
 }
 
 // -> execute
