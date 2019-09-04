@@ -38,9 +38,9 @@ async function settings(req, res) {
 			console.log(result.item.MasterVolume)
 
 			const masterVolume = 80 + parseFloat(result.item.MasterVolume[0].value);
-			const selection = result.item.InputFuncSelect[0].value;
+			const selection = result.item.InputFuncSelect[0].value[0];
 			const mute = result.item.Mute[0].value === 'on';
-			const power = result.item.Power[0].value;
+			const power = result.item.Power[0].value[0];
 
 			res.send({ result: { power, masterVolume, selection, mute } })
 		}
