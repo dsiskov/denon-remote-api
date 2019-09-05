@@ -1,5 +1,6 @@
 const axios = require('axios')
 const parseString = require('xml2js').parseString;
+const stringify = require('querystring').stringify;
 
 module.exports = () => {
 	return {
@@ -15,9 +16,6 @@ const MAIN_ZONE = "MAIN ZONE"
 // urls
 const avr_settings_url = `${process.env.AVR_URL}/goform/formMainZone_MainZoneXml.xml`
 const push_to_avr_url = `${process.env.AVR_URL}/MainZone/index.put.asp`
-
-// actions
-const SET_FIP_RADIO = "cmd0=PutZone_InputFunction%2FIRADIO&cmd1=aspMainZone_WebUpdateStatus%2F"
 
 // internal request header
 function getHeadersForZone(zone) {
@@ -49,8 +47,36 @@ async function settings(req, res) {
 
 // -> execute
 async function execute(req, res) {
-	const avrCommand = req.body.command
-	console.log(`command ${avrCommand}`)
-	let response = await axios.post(push_to_avr_url, avrCommand, getHeadersForZone(MAIN_ZONE))
-	console.log(response)
+	const command = req.body.command
+	const commandParameter = req.body.commandParameter
+	console.log(`executing command ${command}, with parameter: ${commandParameter}`)
+
+	let avrCommand = ''
+
+	// todo: read from constants
+	switch (command) {
+		case 'toggle-power':
+			avrCommand = `PutZone_OnOff/${commandParameter}`
+			break;
+		case 'set-master-volume':
+			const avrVolume = parseFloat(commandParameter) - 80;
+			avrCommand = `PutMasterVolumeSet/${avrVolume}`;
+			break;
+		case 'set-input':
+			avrCommand = `PutZone_InputFunction/${commandParameter}`;
+			break;
+
+		default:
+			res.sendStatus(500)
+	}
+	try {
+		let response = await axios.post(push_to_avr_url, stringify({ cmd0: avrCommand }), getHeadersForZone(MAIN_ZONE))
+		console.log(response)
+		res.send(200);
+	}
+	catch (ex) {
+		const errorString = ex.printStackTrace();
+		console.log(`error: \r\n${errorString}`)
+		res.status(500).send({ error: errorString })
+	}
 }
