@@ -59,7 +59,7 @@ async function execute(req, res) {
 			avrCommand = `PutZone_OnOff/${commandParameter}`
 			break;
 		case 'set-master-volume':
-			const avrVolume = parseFloat(commandParameter) - 80;
+			const avrVolume = commandParameter - 80;
 			avrCommand = `PutMasterVolumeSet/${avrVolume}`;
 			break;
 		case 'set-input':
