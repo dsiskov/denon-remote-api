@@ -59,8 +59,7 @@ async function execute(req, res) {
 			avrCommand = `PutZone_OnOff/${commandParameter}`
 			break;
 		case 'toggle-mute':
-			// todo
-			//avrCommand = `PutZone_OnOff/${commandParameter}`
+			avrCommand = `PutVolumeMute/${commandParameter}`
 			break;
 		case 'set-master-volume':
 			const avrVolume = commandParameter - 80;
